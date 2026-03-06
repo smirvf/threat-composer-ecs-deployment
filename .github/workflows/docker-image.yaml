@@ -128,3 +128,40 @@ jobs:
           echo "IMAGE $IMAGE_TAG is pushed to $ECR_REGISTRY/$ECR_REPOSITORY"
           echo "full_image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> "$GITHUB_OUTPUT"
 
+  deploy-ecs:
+    runs-on: ubuntu-latest
+    needs: push-image
+
+    environment: prod
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v5.1.1
+        with:
+          role-to-assume: ${{ vars.role_to_assume_tf_state }}
+          aws-region: ${{ vars.aws_region }}
+
+      - name: Get latest task definition ARN
+        id: get-task-def
+        run: |
+          ARN=$(aws ecs describe-task-definition \
+            --task-definition ecs_task_definition \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          echo "task_definition_arn=$ARN" >> "$GITHUB_OUTPUT"
+
+      - name: Update ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition-arn: ${{ steps.get-task-def.outputs.task_definition_arn }}
+          container-name: threat-app
+          image: ${{ needs.push-image.outputs.full_image }}
+
+      - name: Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2.6.0
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ecs_proj_service
+          cluster: ecs_cluster
+          wait-for-service-stability: true
