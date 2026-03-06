@@ -143,6 +143,14 @@ resource "aws_ecs_service" "ecs_proj_service" {
   task_definition = aws_ecs_task_definition.ecs_task_definition.arn
   desired_count   = 2
 
+  deployment_minimum_healthy_percent = 100
+  deployment_maximum_percent         = 200
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
   network_configuration {
     security_groups  = [var.ecs_service_sg_id]
     subnets          = [var.ecs_subnet_private_2a_id, var.ecs_subnet_private_2b_id]
