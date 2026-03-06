@@ -12,12 +12,26 @@ on:
 concurrency: ci-${{ github.repository }}-docker-pipeline
 
 jobs:
-  build:
-    name: Build
+  prepare-tag:
     runs-on: ubuntu-latest
+    outputs:
+      ecr_repo_name: ${{ steps.set-repo.outputs.ecr_repo_name }}
+      image_tag: ${{ steps.set-tag.outputs.image_tag }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Prepare ECR repo name
+        id: set-repo
+        run: |
+          repo="${GITHUB_REPOSITORY,,}"
+          echo "ecr_repo_name=${repo//\//_}" >> "$GITHUB_OUTPUT"
+
+      - name: Set image tag
+        id: set-tag
+        run: |
+          tag="${{ vars.image_tag }}-${GITHUB_SHA::7}"
+          echo "image_tag=$tag" >> "$GITHUB_OUTPUT"
+          
 
   docker-image-push:
     runs-on: ubuntu-latest
@@ -30,7 +44,9 @@ jobs:
       full_image: ${{ steps.build-publish.outputs.full_image }}
 
     steps:
+      - name: Checkout code
       - uses: actions/checkout@v4
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v5.1.1
         with:
