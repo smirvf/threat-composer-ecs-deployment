@@ -39,6 +39,10 @@ jobs:
   provision-ecr:
     runs-on: ubuntu-latest
     needs: prepare
+    permissions:
+      id-token: write
+      contents: read
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -76,6 +80,7 @@ jobs:
   build-and-scan:
     runs-on: ubuntu-latest
     needs: provision-ecr
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -97,8 +102,13 @@ jobs:
   push-image:
     runs-on: ubuntu-latest
     needs: build-and-scan
+    permissions:
+      id-token: write
+      contents: read
+
     outputs:
       full_image: ${{ steps.push.outputs.full_image }}
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -131,6 +141,9 @@ jobs:
   deploy-ecs:
     runs-on: ubuntu-latest
     needs: push-image
+    permissions:
+      id-token: write
+      contents: read
 
     environment: prod
 
