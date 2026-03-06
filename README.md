@@ -33,7 +33,7 @@ You can explore the tool's dashboard here: [Threat Composer Tool](https://awslab
 ![threat-composer-gif.gif](images/threat-composer-gif.gif)
 
 ## Architecture Diagram:
-![Architecture Diagram dark.png](images/Architecture%20Diagram%20dark.png)
+![Architecture new.png](images/Architecture%20new.png)
 ## Repository Structure
 ```text
 ├── .gitignore
